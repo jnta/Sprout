@@ -1,4 +1,4 @@
-package br.com.jonataalbuquerque.sprout;
+package br.com.jonataalbuquerque.sprout.web;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
