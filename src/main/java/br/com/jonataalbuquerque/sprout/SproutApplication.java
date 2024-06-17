@@ -15,9 +15,9 @@ public class SproutApplication {
     public static void run(Class<?> source) {
         Logger.showBanner();
         Logger.disableLogs("org.apache");
-        printFoundClasses(source);
+        extractMetadata(source);
         try {
-            Logger.log("Embedded Web Container", "Starting Sprout Application");
+            Logger.log("SproutApplication", "Starting Sprout Application");
 
             long init = System.currentTimeMillis();
 
@@ -32,20 +32,19 @@ public class SproutApplication {
 
             tomcat.start();
             long end = System.currentTimeMillis();
-            Logger.log("Embedded Web Container",
+            Logger.log("SproutApplication",
                     "Sprout application started in " +
                             (double) (end - init) / 1000 + " seconds");
             tomcat.getServer().await();
 
         } catch (Exception ex) {
-            ex.printStackTrace();
+            Logger.error(SproutApplication.class, ex.getMessage());
         }
     }
 
-
-    private static void printFoundClasses(Class<?> source) {
-        List<String> classes = ClassExplorer.retrieveAllClasses(source);
-        for (String className : classes) {
+    private static void extractMetadata(Class<?> source) {
+        List<Class<?>> classes = ClassExplorer.retrieveAllClasses(source);
+        for (Class<?> className : classes) {
             Logger.log("Class Explorer", "Class found: " + className);
         }
     }
