@@ -1,14 +1,13 @@
-package br.com.jonataalbuquerque.sprout;
+package br.com.jonataalbuquerque.sprout.web;
 
 import br.com.jonataalbuquerque.sprout.annotations.*;
 import br.com.jonataalbuquerque.sprout.config.SupportedRequestMapping;
 import br.com.jonataalbuquerque.sprout.datastructures.ControllerMap;
 import br.com.jonataalbuquerque.sprout.domain.ControllerHeader;
+import br.com.jonataalbuquerque.sprout.domain.HttpMethod;
 import br.com.jonataalbuquerque.sprout.domain.RequestHeader;
 import br.com.jonataalbuquerque.sprout.explorer.ClassExplorer;
-import br.com.jonataalbuquerque.sprout.util.HTTPMethod;
 import br.com.jonataalbuquerque.sprout.util.Logger;
-import br.com.jonataalbuquerque.sprout.web.SproutDispatchServlet;
 import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
@@ -30,6 +29,7 @@ public class SproutApplication {
         Logger.showBanner();
         Logger.disableLogs("org.apache");
         extractMetadata(source);
+        Logger.log("SproutApplication", "Metadata extracted from source class + " + ControllerMap.getAll());
         try {
             Logger.log("SproutApplication", "Starting Sprout Application");
 
@@ -80,16 +80,19 @@ public class SproutApplication {
         Annotation[] annotations = method.getAnnotations();
         for (Annotation annotation : annotations) {
             if (annotation instanceof Get get) {
-                return new RequestHeader(HTTPMethod.GET, get.path());
+                return new RequestHeader(HttpMethod.GET, get.path());
             }
             if (annotation instanceof Post post) {
-                return new RequestHeader(HTTPMethod.POST, post.path());
+                return new RequestHeader(HttpMethod.POST, post.path());
             }
             if (annotation instanceof Put put) {
-                return new RequestHeader(HTTPMethod.PUT, put.path());
+                return new RequestHeader(HttpMethod.PUT, put.path());
             }
             if (annotation instanceof Delete delete) {
-                return new RequestHeader(HTTPMethod.DELETE, delete.path());
+                return new RequestHeader(HttpMethod.DELETE, delete.path());
+            }
+            if (annotation instanceof Patch patch) {
+                return new RequestHeader(HttpMethod.PATCH, patch.path());
             }
         }
         return null;
