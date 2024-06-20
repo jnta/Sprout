@@ -3,7 +3,6 @@ package br.com.jonataalbuquerque.sprout.domain;
 public enum HttpMethod {
     POST, PUT, GET, PATCH, DELETE;
 
-
     public static HttpMethod from(String method) {
         return switch (method) {
             case "POST" -> POST;

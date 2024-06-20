@@ -1,7 +1,7 @@
 package br.com.jonataalbuquerque.sprout.web;
 
 import br.com.jonataalbuquerque.sprout.annotations.*;
-import br.com.jonataalbuquerque.sprout.config.SupportedRequestMapping;
+import br.com.jonataalbuquerque.sprout.config.SupportedRequestAnnotations;
 import br.com.jonataalbuquerque.sprout.datastructures.ControllerMap;
 import br.com.jonataalbuquerque.sprout.domain.ControllerHeader;
 import br.com.jonataalbuquerque.sprout.domain.HttpMethod;
@@ -69,7 +69,7 @@ public class SproutApplication {
         for (Class<?> classInstance : classes) {
             if (classInstance.isAnnotationPresent(Controller.class)) {
                 Arrays.stream(classInstance.getDeclaredMethods())
-                        .filter(method -> SupportedRequestMapping.get().stream().anyMatch(method::isAnnotationPresent))
+                        .filter(method -> SupportedRequestAnnotations.get().stream().anyMatch(method::isAnnotationPresent))
                         .forEach(method -> Optional.ofNullable(getRequestHeaderFrom(method))
                                 .ifPresent(requestHeader -> ControllerMap.put(requestHeader, new ControllerHeader(classInstance, method))));
             }

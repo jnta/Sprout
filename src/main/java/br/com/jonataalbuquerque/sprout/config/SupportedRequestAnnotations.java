@@ -8,8 +8,8 @@ import br.com.jonataalbuquerque.sprout.annotations.Put;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
-public class SupportedRequestMapping {
-    private SupportedRequestMapping() {
+public class SupportedRequestAnnotations {
+    private SupportedRequestAnnotations() {
     }
 
     public static List<Class<? extends Annotation>> get() {

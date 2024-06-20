@@ -1,10 +1,13 @@
 package br.com.jonataalbuquerque.sprout.web;
 
+import br.com.jonataalbuquerque.sprout.annotations.HttpBody;
 import br.com.jonataalbuquerque.sprout.datastructures.ControllerInstances;
 import br.com.jonataalbuquerque.sprout.datastructures.ControllerMap;
 import br.com.jonataalbuquerque.sprout.domain.ControllerHeader;
 import br.com.jonataalbuquerque.sprout.domain.RequestHeader;
+import br.com.jonataalbuquerque.sprout.util.Logger;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,21 +15,13 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
 import java.util.Optional;
 
 public class SproutDispatchServlet extends HttpServlet {
-
-    private static void sendResponse(HttpServletResponse resp, int status, Object body) {
-        PrintWriter out = null;
-        try {
-            out = new PrintWriter(resp.getWriter());
-        } catch (IOException e) {
-            resp.setStatus(500);
-            throw new UnsupportedOperationException(e);
-        }
-        resp.setStatus(status);
-        out.println(new Gson().toJson(body));
-    }
+    private static final Gson GSON = new GsonBuilder().create();
 
     /**
      * Overrides the service method of HttpServlet to handle HTTP requests.
@@ -67,9 +62,53 @@ public class SproutDispatchServlet extends HttpServlet {
         // and send the result as a 200 response
         // If an exception occurs during invocation, send a 500 response
         try {
-            sendResponse(resp, 200, controllerHeader.get().method().invoke(instance));
+            Object result;
+            Method method = controllerHeader.get().method();
+            Logger.log("SproutDispatchServlet", "Invoking method: "
+                    + method.getName() + " on instance: " + instance);
+            if (method.getParameterCount() > 0 && hasHttpBodyAnnotation(method.getParameters())) {
+                Object requestBody = GSON.fromJson(readBytesFromRequest(req), getHttpBodyParameter(method).getType());
+                result = method.invoke(instance, requestBody);
+            } else {
+                result = method.invoke(instance);
+            }
+            sendResponse(resp, 200, result);
         } catch (IllegalAccessException | InvocationTargetException e) {
             sendResponse(resp, 500, "500 - Internal Server Error");
         }
+    }
+
+    private static boolean hasHttpBodyAnnotation(Parameter[] parameters) {
+        return Arrays.stream(parameters).map(Parameter::getAnnotations)
+                .anyMatch(p -> Arrays.stream(p).anyMatch(a -> a.annotationType().equals(HttpBody.class)));
+    }
+
+    private static Parameter getHttpBodyParameter(Method method) {
+        return Arrays.stream(method.getParameters())
+                .filter(p -> Arrays.stream(p.getAnnotations())
+                        .anyMatch(a -> a.annotationType().equals(HttpBody.class)))
+                .findFirst().orElseThrow();
+    }
+
+    private static String readBytesFromRequest(HttpServletRequest req) {
+        StringBuilder sb = new StringBuilder();
+        try {
+            req.getReader().lines().forEach(sb::append);
+        } catch (IOException e) {
+            throw new UnsupportedOperationException(e);
+        }
+        return sb.toString();
+    }
+
+    private static void sendResponse(HttpServletResponse resp, int status, Object body) {
+        PrintWriter out = null;
+        try {
+            out = new PrintWriter(resp.getWriter());
+        } catch (IOException e) {
+            resp.setStatus(500);
+            throw new UnsupportedOperationException(e);
+        }
+        resp.setStatus(status);
+        out.println(GSON.toJson(body));
     }
 }

@@ -12,6 +12,9 @@ import java.util.List;
 
 public class ClassExplorer {
 
+    private ClassExplorer() {
+    }
+
     public static List<Class<?>> retrieveAllClasses(Class<?> source) {
         return findClassesByPackageName(source.getPackage().getName());
     }
