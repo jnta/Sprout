@@ -1,10 +1,11 @@
 package br.com.jonataalbuquerque.sprout.web;
 
-import br.com.jonataalbuquerque.sprout.annotations.*;
+import br.com.jonataalbuquerque.sprout.annotations.Controller;
+import br.com.jonataalbuquerque.sprout.annotations.Service;
 import br.com.jonataalbuquerque.sprout.config.SupportedRequestAnnotations;
 import br.com.jonataalbuquerque.sprout.datastructures.ControllerMap;
+import br.com.jonataalbuquerque.sprout.datastructures.DependencyImplementationMap;
 import br.com.jonataalbuquerque.sprout.domain.ControllerHeader;
-import br.com.jonataalbuquerque.sprout.domain.HttpMethod;
 import br.com.jonataalbuquerque.sprout.domain.RequestHeader;
 import br.com.jonataalbuquerque.sprout.explorer.ClassExplorer;
 import br.com.jonataalbuquerque.sprout.util.Logger;
@@ -13,8 +14,6 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 
 import java.io.File;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -70,32 +69,13 @@ public class SproutApplication {
             if (classInstance.isAnnotationPresent(Controller.class)) {
                 Arrays.stream(classInstance.getDeclaredMethods())
                         .filter(method -> SupportedRequestAnnotations.get().stream().anyMatch(method::isAnnotationPresent))
-                        .forEach(method -> Optional.ofNullable(getRequestHeaderFrom(method))
+                        .forEach(method -> Optional.of(RequestHeader.from(method))
                                 .ifPresent(requestHeader -> ControllerMap.put(requestHeader, new ControllerHeader(classInstance, method))));
+            } else if (classInstance.isAnnotationPresent(Service.class)) {
+                Arrays.stream(classInstance.getInterfaces()).findFirst().ifPresent(dependency ->
+                        DependencyImplementationMap.put(dependency, classInstance)
+                );
             }
         }
     }
-
-    private static RequestHeader getRequestHeaderFrom(Method method) {
-        Annotation[] annotations = method.getAnnotations();
-        for (Annotation annotation : annotations) {
-            if (annotation instanceof Get get) {
-                return new RequestHeader(HttpMethod.GET, get.path());
-            }
-            if (annotation instanceof Post post) {
-                return new RequestHeader(HttpMethod.POST, post.path());
-            }
-            if (annotation instanceof Put put) {
-                return new RequestHeader(HttpMethod.PUT, put.path());
-            }
-            if (annotation instanceof Delete delete) {
-                return new RequestHeader(HttpMethod.DELETE, delete.path());
-            }
-            if (annotation instanceof Patch patch) {
-                return new RequestHeader(HttpMethod.PATCH, patch.path());
-            }
-        }
-        return null;
-    }
-
 }
